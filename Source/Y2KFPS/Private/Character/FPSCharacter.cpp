@@ -16,6 +16,12 @@ AFPSCharacter::AFPSCharacter()
 	FirstPersonCamera = CreateDefaultSubobject<UCameraComponent>("FirstPersonCamera");
 	FirstPersonCamera->SetupAttachment(RootComponent);
 	FirstPersonCamera->bUsePawnControlRotation = true;
+
+	FPSArm = CreateDefaultSubobject<USkeletalMeshComponent>("FPSArm");
+	FPSArm->SetupAttachment(FirstPersonCamera);
+	FPSArm->SetOnlyOwnerSee(true);
+	FPSArm->bCastDynamicShadow = false;
+	FPSArm->CastShadow = false;
 }
 
 // Called when the game starts or when spawned

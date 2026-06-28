@@ -10,6 +10,7 @@
 class UInputMappingContext;
 class UInputAction;
 class UCameraComponent;
+class USkeletalMeshComponent;
 
 UCLASS()
 class Y2KFPS_API AFPSCharacter : public ACharacter
@@ -19,6 +20,9 @@ class Y2KFPS_API AFPSCharacter : public ACharacter
 	UPROPERTY(VisibleAnywhere, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UCameraComponent> FirstPersonCamera;
 
+	/** First person arms skeletal mesh (visible only to the local controlling player) */
+	UPROPERTY(VisibleAnywhere, Category = "Mesh")
+	TObjectPtr<USkeletalMeshComponent> FPSArm;
 public:
 	// Sets default values for this character's properties
 	AFPSCharacter();
