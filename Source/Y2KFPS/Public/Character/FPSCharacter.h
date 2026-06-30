@@ -43,6 +43,9 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "EnhancedInput")
 	TObjectPtr<UInputAction> JumpAction;
 
+	UPROPERTY(EditAnywhere, Category = "EnhancedInput")
+	TObjectPtr<UInputAction> SlowMoAction;
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -54,4 +57,31 @@ protected:
 	void Move(const FInputActionValue& InputValue);
 	void Look(const FInputActionValue& InputValue);
 	void Jump();
+
+	UFUNCTION(BlueprintCallable, Category= "Input")
+	void EnableSlowMo();
+
+	UFUNCTION(BlueprintCallable, Category= "Input")
+	void DisableSlowMo();
+
+	UPROPERTY()
+	FTimerHandle SlowMoTimer;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float SlowMoCount = 100.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float RechargeRate = 0.1f;
+
+	UFUNCTION()
+	void UsingSlowMo();
+
+	UPROPERTY()
+	bool bUsedSlowMo = false;
+
+	UPROPERTY()
+	bool bIsUsingSlowMo = false;
+
+	UPROPERTY()
+	bool bDepletedSlowMo = false;
 };

@@ -6,6 +6,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
 #include "Camera/CameraComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 AFPSCharacter::AFPSCharacter()
@@ -29,6 +30,9 @@ void AFPSCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	GetWorld()->GetTimerManager().SetTimer(SlowMoTimer, this, &AFPSCharacter::UsingSlowMo, 0.016f, true);
+	GetWorld()->GetTimerManager().PauseTimer(SlowMoTimer);
+
 	// Add Input mapping context
 	if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
 	{
@@ -58,6 +62,10 @@ void AFPSCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 		EnhancedInput->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AFPSCharacter::Move);
 		EnhancedInput->BindAction(LookAction, ETriggerEvent::Triggered, this, &AFPSCharacter::Look);
 		EnhancedInput->BindAction(JumpAction, ETriggerEvent::Triggered, this, &AFPSCharacter::Jump);
+
+		// SlowMotion
+		EnhancedInput->BindAction(SlowMoAction, ETriggerEvent::Started, this, &AFPSCharacter::EnableSlowMo);
+		EnhancedInput->BindAction(SlowMoAction, ETriggerEvent::Completed, this, &AFPSCharacter::DisableSlowMo);
 	}
 }
 
@@ -94,5 +102,55 @@ void AFPSCharacter::Look(const FInputActionValue & InputValue)
 void AFPSCharacter::Jump()
 {
 	ACharacter::Jump();
+}
+
+void AFPSCharacter::EnableSlowMo()
+{
+	if (bDepletedSlowMo) return;
+	bIsUsingSlowMo = true;
+	bUsedSlowMo = false;
+	UGameplayStatics::SetGlobalTimeDilation(GetWorld(), 0.25);
+	GetWorld()->GetTimerManager().UnPauseTimer(SlowMoTimer);
+}
+
+void AFPSCharacter::DisableSlowMo()
+{
+	if (!bIsUsingSlowMo) return;
+
+	bIsUsingSlowMo = false;
+	bUsedSlowMo = true;
+	UGameplayStatics::SetGlobalTimeDilation(GetWorld(), 1.0f);
+	GetWorld()->GetTimerManager().UnPauseTimer(SlowMoTimer);
+}
+
+void AFPSCharacter::UsingSlowMo()
+{
+	UE_LOG(LogTemp, Warning, TEXT("SlowMoCount: %f"), SlowMoCount);
+	if (bIsUsingSlowMo)
+	{
+		SlowMoCount = FMath::Max(SlowMoCount - 1, 0);
+		if (SlowMoCount <= 0)
+		{
+			bDepletedSlowMo = true;
+			bUsedSlowMo = true;
+			bIsUsingSlowMo = false;
+			UGameplayStatics::SetGlobalTimeDilation(GetWorld(), 1.0f);
+		}
+	}
+	else if (bUsedSlowMo)
+	{
+		SlowMoCount = FMath::Min(SlowMoCount + RechargeRate, 100);
+		if (SlowMoCount > 10)
+		{
+			bDepletedSlowMo = false;
+		}
+		if (SlowMoCount >= 100)
+		{
+			bUsedSlowMo = false;
+			bDepletedSlowMo = false;
+			SlowMoCount = 100;
+			GetWorld()->GetTimerManager().PauseTimer(SlowMoTimer);
+		}
+	}
 }
 
