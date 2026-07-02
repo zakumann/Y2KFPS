@@ -11,6 +11,8 @@ class UInputMappingContext;
 class UInputAction;
 class UCameraComponent;
 class USkeletalMeshComponent;
+class UPlayerHUD;
+class AFPSPlayerController;
 
 UCLASS()
 class Y2KFPS_API AFPSCharacter : public ACharacter
@@ -84,4 +86,13 @@ protected:
 
 	UPROPERTY()
 	bool bDepletedSlowMo = false;
+
+	UPROPERTY()
+	TObjectPtr<UPlayerHUD> PlayerHUD;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<UPlayerHUD> PlayerHUDClass;
+
+	UPROPERTY()
+	TObjectPtr<AFPSPlayerController> PC;
 };

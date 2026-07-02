@@ -7,6 +7,8 @@
 #include "EnhancedInputComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "HUD/PlayerHUD.h"
+#include "PlayerController/FPSPlayerController.h"
 
 // Sets default values
 AFPSCharacter::AFPSCharacter()
@@ -32,6 +34,12 @@ void AFPSCharacter::BeginPlay()
 	
 	GetWorld()->GetTimerManager().SetTimer(SlowMoTimer, this, &AFPSCharacter::UsingSlowMo, 0.016f, true);
 	GetWorld()->GetTimerManager().PauseTimer(SlowMoTimer);
+	this->PC = GetController<AFPSPlayerController>();
+	if (IsValid(PlayerHUDClass) && IsValid(PC))
+	{
+		PlayerHUD = CreateWidget<UPlayerHUD>(PC, PlayerHUDClass);
+		PlayerHUD->AddToViewport();
+	}
 
 	// Add Input mapping context
 	if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
@@ -125,7 +133,6 @@ void AFPSCharacter::DisableSlowMo()
 
 void AFPSCharacter::UsingSlowMo()
 {
-	UE_LOG(LogTemp, Warning, TEXT("SlowMoCount: %f"), SlowMoCount);
 	if (bIsUsingSlowMo)
 	{
 		SlowMoCount = FMath::Max(SlowMoCount - 1, 0);
@@ -152,5 +159,6 @@ void AFPSCharacter::UsingSlowMo()
 			GetWorld()->GetTimerManager().PauseTimer(SlowMoTimer);
 		}
 	}
+	PlayerHUD->UpdateSlowMoBar(SlowMoCount, 100);
 }
 
