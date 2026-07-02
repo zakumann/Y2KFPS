@@ -48,6 +48,9 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "EnhancedInput")
 	TObjectPtr<UInputAction> SlowMoAction;
 
+	UPROPERTY(EditAnywhere, Category = "EnhancedInput")
+	TObjectPtr<UInputAction> SprintAction;
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -59,6 +62,8 @@ protected:
 	void Move(const FInputActionValue& InputValue);
 	void Look(const FInputActionValue& InputValue);
 	void Jump();
+	void Sprint();
+	void StopSprinting();
 
 	UFUNCTION(BlueprintCallable, Category= "Input")
 	void EnableSlowMo();

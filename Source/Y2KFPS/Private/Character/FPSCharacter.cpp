@@ -9,6 +9,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "HUD/PlayerHUD.h"
 #include "PlayerController/FPSPlayerController.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values
 AFPSCharacter::AFPSCharacter()
@@ -74,6 +75,10 @@ void AFPSCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 		// SlowMotion
 		EnhancedInput->BindAction(SlowMoAction, ETriggerEvent::Started, this, &AFPSCharacter::EnableSlowMo);
 		EnhancedInput->BindAction(SlowMoAction, ETriggerEvent::Completed, this, &AFPSCharacter::DisableSlowMo);
+
+		// Sprint
+		EnhancedInput->BindAction(SprintAction, ETriggerEvent::Started, this, &AFPSCharacter::Sprint);
+		EnhancedInput->BindAction(SprintAction, ETriggerEvent::Completed, this, &AFPSCharacter::StopSprinting);
 	}
 }
 
@@ -110,6 +115,16 @@ void AFPSCharacter::Look(const FInputActionValue & InputValue)
 void AFPSCharacter::Jump()
 {
 	ACharacter::Jump();
+}
+
+void AFPSCharacter::Sprint()
+{
+	GetCharacterMovement()->MaxWalkSpeed = 800.0f;
+}
+
+void AFPSCharacter::StopSprinting()
+{
+	GetCharacterMovement()->MaxWalkSpeed = 600.0f;
 }
 
 void AFPSCharacter::EnableSlowMo()
