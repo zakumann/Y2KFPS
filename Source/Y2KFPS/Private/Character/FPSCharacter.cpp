@@ -73,8 +73,9 @@ void AFPSCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 		EnhancedInput->BindAction(JumpAction, ETriggerEvent::Triggered, this, &AFPSCharacter::Jump);
 
 		// SlowMotion
-		EnhancedInput->BindAction(SlowMoAction, ETriggerEvent::Started, this, &AFPSCharacter::EnableSlowMo);
-		EnhancedInput->BindAction(SlowMoAction, ETriggerEvent::Completed, this, &AFPSCharacter::DisableSlowMo);
+		EnhancedInput->BindAction(SlowMoAction, ETriggerEvent::Started, this, &AFPSCharacter::ToggleSlowMo);
+		// EnhancedInput->BindAction(SlowMoAction, ETriggerEvent::Started, this, &AFPSCharacter::EnableSlowMo);
+		// EnhancedInput->BindAction(SlowMoAction, ETriggerEvent::Completed, this, &AFPSCharacter::DisableSlowMo);
 
 		// Sprint
 		EnhancedInput->BindAction(SprintAction, ETriggerEvent::Started, this, &AFPSCharacter::Sprint);
@@ -125,6 +126,18 @@ void AFPSCharacter::Sprint()
 void AFPSCharacter::StopSprinting()
 {
 	GetCharacterMovement()->MaxWalkSpeed = 600.0f;
+}
+
+void AFPSCharacter::ToggleSlowMo()
+{
+	if (bIsUsingSlowMo)
+	{
+		DisableSlowMo();
+	}
+	else
+	{
+		EnableSlowMo();
+	}
 }
 
 void AFPSCharacter::EnableSlowMo()

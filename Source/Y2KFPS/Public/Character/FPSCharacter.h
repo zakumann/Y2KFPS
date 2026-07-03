@@ -65,6 +65,9 @@ protected:
 	void Sprint();
 	void StopSprinting();
 
+	UFUNCTION(BlueprintCallable, Category = "Input")
+	void ToggleSlowMo();
+
 	UFUNCTION(BlueprintCallable, Category= "Input")
 	void EnableSlowMo();
 
