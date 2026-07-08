@@ -13,6 +13,7 @@ class UCameraComponent;
 class USkeletalMeshComponent;
 class UPlayerHUD;
 class AFPSPlayerController;
+class UAnimMontage;
 
 UCLASS()
 class Y2KFPS_API AFPSCharacter : public ACharacter
@@ -65,6 +66,13 @@ protected:
 	void Sprint();
 	void StopSprinting();
 
+	// First-person primitives field of view
+	UPROPERTY(EditAnywhere, Category = "Camera")
+	float FirstPersonFieldofView = 70.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Camera")
+	float FirstPersonScale = 0.6f;
+
 	UFUNCTION(BlueprintCallable, Category = "Input")
 	void ToggleSlowMo();
 
@@ -81,7 +89,7 @@ protected:
 	float SlowMoCount = 100.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float RechargeRate = 0.1f;
+	float RechargeRate = 0.025f;
 
 	UFUNCTION()
 	void UsingSlowMo();

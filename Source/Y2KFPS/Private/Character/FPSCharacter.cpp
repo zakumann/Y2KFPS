@@ -24,6 +24,7 @@ AFPSCharacter::AFPSCharacter()
 	FPSArm = CreateDefaultSubobject<USkeletalMeshComponent>("FPSArm");
 	FPSArm->SetupAttachment(FirstPersonCamera);
 	FPSArm->SetOnlyOwnerSee(true);
+	FPSArm->SetCollisionProfileName(FName("NoCollision"));
 	FPSArm->bCastDynamicShadow = false;
 	FPSArm->CastShadow = false;
 }
@@ -120,12 +121,12 @@ void AFPSCharacter::Jump()
 
 void AFPSCharacter::Sprint()
 {
-	GetCharacterMovement()->MaxWalkSpeed = 800.0f;
+	GetCharacterMovement()->MaxWalkSpeed = 900.0f;
 }
 
 void AFPSCharacter::StopSprinting()
 {
-	GetCharacterMovement()->MaxWalkSpeed = 600.0f;
+	GetCharacterMovement()->MaxWalkSpeed = 500.0f;
 }
 
 void AFPSCharacter::ToggleSlowMo()
@@ -189,4 +190,3 @@ void AFPSCharacter::UsingSlowMo()
 	}
 	PlayerHUD->UpdateSlowMoBar(SlowMoCount, 100);
 }
-
