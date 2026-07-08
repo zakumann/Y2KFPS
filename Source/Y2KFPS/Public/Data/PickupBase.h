@@ -4,16 +4,16 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "BaseWeapon.generated.h"
+#include "PickupBase.generated.h"
 
 UCLASS()
-class Y2KFPS_API ABaseWeapon : public AActor
+class Y2KFPS_API APickupBase : public AActor
 {
 	GENERATED_BODY()
 	
 public:	
 	// Sets default values for this actor's properties
-	ABaseWeapon();
+	APickupBase();
 
 protected:
 	// Called when the game starts or when spawned
