@@ -36,11 +36,12 @@ struct FItemData : public FTableRowBase
 	FName ID;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item Data")
-	EItemType Type;
+	EItemType ItemType;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item Data")
-	FItemText Text;
+	FItemText ItemText;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item Data")
-	TSoftObjectPtr<UItemDefinition> Definition;
+	// The Data Asset item definition associated with this item.
+	UPROPERTY(EditAnywhere, Category = "Item Data")
+	TSoftObjectPtr<UItemDefinition> ItemBase;
 };
