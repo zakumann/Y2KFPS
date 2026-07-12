@@ -2,14 +2,13 @@
 
 
 #include "Character/FPSCharacter.h"
-#include "InputMappingContext.h"
+#include "Camera/CameraComponent.h"
+#include "GameFramework/SpringArmComponent.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Combat/CombatComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
-#include "Camera/CameraComponent.h"
-#include "Kismet/GameplayStatics.h"
-#include "HUD/PlayerHUD.h"
-#include "PlayerController/FPSPlayerController.h"
-#include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values
 AFPSCharacter::AFPSCharacter()
@@ -17,42 +16,38 @@ AFPSCharacter::AFPSCharacter()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	SpringArm = CreateDefaultSubobject<USpringArmComponent>("SpringArm");
+	SpringArm->SetupAttachment(GetRootComponent());
+	SpringArm->TargetArmLength = 0.0f;
+	SpringArm->bEnableCameraLag = true;
+	SpringArm->CameraLagSpeed = 15.0f;
+	SpringArm->bUsePawnControlRotation = true;
+
 	FirstPersonCamera = CreateDefaultSubobject<UCameraComponent>("FirstPersonCamera");
-	FirstPersonCamera->SetupAttachment(RootComponent);
-	FirstPersonCamera->bUsePawnControlRotation = true;
+	FirstPersonCamera->SetupAttachment(SpringArm);
+	FirstPersonCamera->bUsePawnControlRotation = false;
 
 	FPSArm = CreateDefaultSubobject<USkeletalMeshComponent>("FPSArm");
 	FPSArm->SetupAttachment(FirstPersonCamera);
-	FPSArm->SetOnlyOwnerSee(true);
-	FPSArm->SetCollisionProfileName(FName("NoCollision"));
+	FPSArm->bOnlyOwnerSee = true;
+	FPSArm->bOwnerNoSee = false;
 	FPSArm->bCastDynamicShadow = false;
-	FPSArm->CastShadow = false;
+	FPSArm->bReceivesDecals = false;
+	FPSArm->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
+	FPSArm->PrimaryComponentTick.TickGroup = TG_PrePhysics;
+
+	GetMesh()->bOnlyOwnerSee = false;
+	GetMesh()->bOwnerNoSee = true;
+	GetMesh()->bReceivesDecals = false;
+
+	Combat = CreateDefaultSubobject<UCombatComponent>("Combat");
+	Combat->SetIsReplicated(true);
 }
 
 // Called when the game starts or when spawned
 void AFPSCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	GetWorld()->GetTimerManager().SetTimer(SlowMoTimer, this, &AFPSCharacter::UsingSlowMo, 0.016f, true);
-	GetWorld()->GetTimerManager().PauseTimer(SlowMoTimer);
-	this->PC = GetController<AFPSPlayerController>();
-	if (IsValid(PlayerHUDClass) && IsValid(PC))
-	{
-		PlayerHUD = CreateWidget<UPlayerHUD>(PC, PlayerHUDClass);
-		PlayerHUD->AddToViewport();
-	}
-
-	// Add Input mapping context
-	if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
-	{
-		// Get local player subsystem
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
-		{
-			// Add input context
-			Subsystem->AddMappingContext(InputMapping, 0);
-		}
-	}
 }
 
 // Called every frame
@@ -67,126 +62,42 @@ void AFPSCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-	if (UEnhancedInputComponent* EnhancedInput = Cast<UEnhancedInputComponent>(PlayerInputComponent))
-	{
-		EnhancedInput->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AFPSCharacter::Move);
-		EnhancedInput->BindAction(LookAction, ETriggerEvent::Triggered, this, &AFPSCharacter::Look);
-		EnhancedInput->BindAction(JumpAction, ETriggerEvent::Triggered, this, &AFPSCharacter::Jump);
+	UEnhancedInputComponent* ShooterInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent);
 
-		// SlowMotion
-		EnhancedInput->BindAction(SlowMoAction, ETriggerEvent::Started, this, &AFPSCharacter::ToggleSlowMo);
-		// EnhancedInput->BindAction(SlowMoAction, ETriggerEvent::Started, this, &AFPSCharacter::EnableSlowMo);
-		// EnhancedInput->BindAction(SlowMoAction, ETriggerEvent::Completed, this, &AFPSCharacter::DisableSlowMo);
-
-		// Sprint
-		EnhancedInput->BindAction(SprintAction, ETriggerEvent::Started, this, &AFPSCharacter::Sprint);
-		EnhancedInput->BindAction(SprintAction, ETriggerEvent::Completed, this, &AFPSCharacter::StopSprinting);
-	}
+	ShooterInputComponent->BindAction(CycleWeaponAction, ETriggerEvent::Started, this, &AFPSCharacter::CycleWeapon);
+	ShooterInputComponent->BindAction(FireWeaponAction, ETriggerEvent::Started, this, &AFPSCharacter::FireWeaponPressed);
+	ShooterInputComponent->BindAction(FireWeaponAction, ETriggerEvent::Completed, this, &AFPSCharacter::FireWeaponReleased);
+	ShooterInputComponent->BindAction(AimWeaponAction, ETriggerEvent::Started, this, &AFPSCharacter::AimPressed);
+	ShooterInputComponent->BindAction(AimWeaponAction, ETriggerEvent::Completed, this, &AFPSCharacter::AimReleased);
+	ShooterInputComponent->BindAction(ReloadWeaponAction, ETriggerEvent::Started, this, &AFPSCharacter::ReloadWeapon);
 }
 
-void AFPSCharacter::Move(const FInputActionValue& InputValue)
+void AFPSCharacter::CycleWeapon()
 {
-	FVector2D InputVector = InputValue.Get<FVector2D>();
-
-	if (IsValid(Controller))
-	{
-		// Get Forward Direction
-		const FRotator Rotation = Controller->GetControlRotation();
-		const FRotator YawRotation(0, Rotation.Yaw, 0);
-
-		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-
-		// Add movement input
-		AddMovementInput(ForwardDirection, InputVector.Y);
-		AddMovementInput(RightDirection, InputVector.X);
-	}
+	Combat->CycleWeapon();
 }
 
-void AFPSCharacter::Look(const FInputActionValue & InputValue)
+void AFPSCharacter::ReloadWeapon()
 {
-	FVector2D InputVector = InputValue.Get<FVector2D>();
-
-	if (IsValid(Controller))
-	{
-		AddControllerYawInput(InputVector.X);
-		AddControllerPitchInput(InputVector.Y);
-	}
+	Combat->ReloadWeapon();
 }
 
-void AFPSCharacter::Jump()
+void AFPSCharacter::FireWeaponPressed()
 {
-	ACharacter::Jump();
+	Combat->FireWeaponPressed();
 }
 
-void AFPSCharacter::Sprint()
+void AFPSCharacter::FireWeaponReleased()
 {
-	GetCharacterMovement()->MaxWalkSpeed = 900.0f;
+	Combat->FireWeaponReleased();
 }
 
-void AFPSCharacter::StopSprinting()
+void AFPSCharacter::AimPressed()
 {
-	GetCharacterMovement()->MaxWalkSpeed = 500.0f;
+	Combat->AimPressed();
 }
 
-void AFPSCharacter::ToggleSlowMo()
+void AFPSCharacter::AimReleased()
 {
-	if (bIsUsingSlowMo)
-	{
-		DisableSlowMo();
-	}
-	else
-	{
-		EnableSlowMo();
-	}
-}
-
-void AFPSCharacter::EnableSlowMo()
-{
-	if (bDepletedSlowMo) return;
-	bIsUsingSlowMo = true;
-	bUsedSlowMo = false;
-	UGameplayStatics::SetGlobalTimeDilation(GetWorld(), 0.25);
-	GetWorld()->GetTimerManager().UnPauseTimer(SlowMoTimer);
-}
-
-void AFPSCharacter::DisableSlowMo()
-{
-	if (!bIsUsingSlowMo) return;
-
-	bIsUsingSlowMo = false;
-	bUsedSlowMo = true;
-	UGameplayStatics::SetGlobalTimeDilation(GetWorld(), 1.0f);
-	GetWorld()->GetTimerManager().UnPauseTimer(SlowMoTimer);
-}
-
-void AFPSCharacter::UsingSlowMo()
-{
-	if (bIsUsingSlowMo)
-	{
-		SlowMoCount = FMath::Max(SlowMoCount - 1, 0);
-		if (SlowMoCount <= 0)
-		{
-			bDepletedSlowMo = true;
-			bUsedSlowMo = true;
-			bIsUsingSlowMo = false;
-			UGameplayStatics::SetGlobalTimeDilation(GetWorld(), 1.0f);
-		}
-	}
-	else if (bUsedSlowMo)
-	{
-		SlowMoCount = FMath::Min(SlowMoCount + RechargeRate, 100);
-		if (SlowMoCount > 10)
-		{
-			bDepletedSlowMo = false;
-		}
-		if (SlowMoCount >= 100)
-		{
-			bUsedSlowMo = false;
-			bDepletedSlowMo = false;
-			SlowMoCount = 100;
-			GetWorld()->GetTimerManager().PauseTimer(SlowMoTimer);
-		}
-	}
-	PlayerHUD->UpdateSlowMoBar(SlowMoCount, 100);
+	Combat->AimReleased();
 }

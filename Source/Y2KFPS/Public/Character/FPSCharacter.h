@@ -4,16 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "InputActionValue.h"
 #include "FPSCharacter.generated.h"
 
-class UInputMappingContext;
-class UInputAction;
 class UCameraComponent;
+class USpringArmComponent;
 class USkeletalMeshComponent;
-class UPlayerHUD;
-class AFPSPlayerController;
-class UAnimMontage;
+class UCombatComponent;
+class UInputAction;
 
 UCLASS()
 class Y2KFPS_API AFPSCharacter : public ACharacter
@@ -23,9 +20,24 @@ class Y2KFPS_API AFPSCharacter : public ACharacter
 	UPROPERTY(VisibleAnywhere, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UCameraComponent> FirstPersonCamera;
 
+	UPROPERTY(VisibleAnywhere, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<USpringArmComponent> SpringArm;
+
 	/** First person arms skeletal mesh (visible only to the local controlling player) */
 	UPROPERTY(VisibleAnywhere, Category = "Mesh")
 	TObjectPtr<USkeletalMeshComponent> FPSArm;
+
+	UPROPERTY(EditAnywhere, Category = "EnhanceInput")
+	TObjectPtr<UInputAction> CycleWeaponAction;
+
+	UPROPERTY(EditAnywhere, Category = "EnhanceInput")
+	TObjectPtr<UInputAction> FireWeaponAction;
+
+	UPROPERTY(EditAnywhere, Category = "EnhanceInput")
+	TObjectPtr<UInputAction> ReloadWeaponAction;
+
+	UPROPERTY(EditAnywhere, Category = "EnhanceInput")
+	TObjectPtr<UInputAction> AimWeaponAction;
 public:
 	// Sets default values for this character's properties
 	AFPSCharacter();
@@ -34,24 +46,6 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	UPROPERTY(EditAnywhere, Category = "EnhancedInput")
-	TObjectPtr<UInputMappingContext> InputMapping;
-
-	UPROPERTY(EditAnywhere, Category = "EnhancedInput")
-	TObjectPtr<UInputAction> MoveAction;
-
-	UPROPERTY(EditAnywhere, Category = "EnhancedInput")
-	TObjectPtr<UInputAction> LookAction;
-
-	UPROPERTY(EditAnywhere, Category = "EnhancedInput")
-	TObjectPtr<UInputAction> JumpAction;
-
-	UPROPERTY(EditAnywhere, Category = "EnhancedInput")
-	TObjectPtr<UInputAction> SlowMoAction;
-
-	UPROPERTY(EditAnywhere, Category = "EnhancedInput")
-	TObjectPtr<UInputAction> SprintAction;
-
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -59,56 +53,15 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-protected:
-	void Move(const FInputActionValue& InputValue);
-	void Look(const FInputActionValue& InputValue);
-	void Jump();
-	void Sprint();
-	void StopSprinting();
+private:
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<UCombatComponent> Combat;
 
-	// First-person primitives field of view
-	UPROPERTY(EditAnywhere, Category = "Camera")
-	float FirstPersonFieldofView = 70.0f;
 
-	UPROPERTY(EditAnywhere, Category = "Camera")
-	float FirstPersonScale = 0.6f;
-
-	UFUNCTION(BlueprintCallable, Category = "Input")
-	void ToggleSlowMo();
-
-	UFUNCTION(BlueprintCallable, Category= "Input")
-	void EnableSlowMo();
-
-	UFUNCTION(BlueprintCallable, Category= "Input")
-	void DisableSlowMo();
-
-	UPROPERTY()
-	FTimerHandle SlowMoTimer;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float SlowMoCount = 100.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float RechargeRate = 0.025f;
-
-	UFUNCTION()
-	void UsingSlowMo();
-
-	UPROPERTY()
-	bool bUsedSlowMo = false;
-
-	UPROPERTY()
-	bool bIsUsingSlowMo = false;
-
-	UPROPERTY()
-	bool bDepletedSlowMo = false;
-
-	UPROPERTY()
-	TObjectPtr<UPlayerHUD> PlayerHUD;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<UPlayerHUD> PlayerHUDClass;
-
-	UPROPERTY()
-	TObjectPtr<AFPSPlayerController> PC;
+	void CycleWeapon();
+	void ReloadWeapon();
+	void FireWeaponPressed();
+	void FireWeaponReleased();
+	void AimPressed();
+	void AimReleased();
 };
