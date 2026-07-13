@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "GameplayTagContainer.h"
 #include "Weapon.generated.h"
 
 UCLASS()
@@ -20,6 +21,8 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
+	UPROPERTY(EditAnywhere, Category = "WeaponType")
+	FGameplayTag WeaponType;
 private:
 	// Weapon Mesh: 1st person view
 	UPROPERTY(VisibleAnywhere)
