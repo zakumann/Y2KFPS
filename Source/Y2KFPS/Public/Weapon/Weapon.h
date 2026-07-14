@@ -14,14 +14,17 @@ class Y2KFPS_API AWeapon : public AActor
 	
 public:	
 	AWeapon();
+	virtual void OnRep_Instigator() override;
 
 	USkeletalMeshComponent* GetMeshFirstPerson() const;
 	USkeletalMeshComponent* GetMeshThirdPerson() const;
 
+	void AttachToOwningPawn() const;
+
 protected:
 	virtual void BeginPlay() override;
 
-	UPROPERTY(EditAnywhere, Category = "WeaponType")
+	UPROPERTY(EditAnywhere, Category = "FPS|WeaponType")
 	FGameplayTag WeaponType;
 private:
 	// Weapon Mesh: 1st person view
@@ -31,4 +34,6 @@ private:
 	// Weapon Mesh: 3rd person view
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<USkeletalMeshComponent> MeshThirdPerson;
+
+	void SetMeshVisibilities(APawn* OwningPawn) const;
 };

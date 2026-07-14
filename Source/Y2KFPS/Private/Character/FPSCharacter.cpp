@@ -9,6 +9,8 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
+#include "Data/WeaponData.h"
+#include "Weapon/Weapon.h"
 
 // Sets default values
 AFPSCharacter::AFPSCharacter()
@@ -70,6 +72,31 @@ void AFPSCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 	ShooterInputComponent->BindAction(AimWeaponAction, ETriggerEvent::Started, this, &AFPSCharacter::AimPressed);
 	ShooterInputComponent->BindAction(AimWeaponAction, ETriggerEvent::Completed, this, &AFPSCharacter::AimReleased);
 	ShooterInputComponent->BindAction(ReloadWeaponAction, ETriggerEvent::Started, this, &AFPSCharacter::ReloadWeapon);
+}
+
+void AFPSCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+	if (IsValid(Combat))
+	{
+		Combat->SpawnInventory();
+	}
+}
+
+FName AFPSCharacter::GetWeaponAttachPoint_Implementation(const FGameplayTag& WeaponType) const
+{
+	checkf(Combat->WeaponData, TEXT("No Weapon Data Asset - Please fill out BP_ShooterCharacter"));
+	return Combat->WeaponData->GripPoints.FindChecked(WeaponType);
+}
+
+USkeletalMeshComponent* AFPSCharacter::GetMeshFirstPerson_Implementation() const
+{
+	return FPSArm;
+}
+
+USkeletalMeshComponent* AFPSCharacter::GetMeshThirdPerson_Implementation() const
+{
+	return GetMesh();
 }
 
 void AFPSCharacter::CycleWeapon()
