@@ -17,6 +17,7 @@ class Y2KFPS_API UCombatComponent : public UActorComponent
 public:	
 	UCombatComponent();
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
 	// Cycle to the next weapon in the inventory
 	void CycleWeapon();
@@ -29,13 +30,24 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "FPS|Weapon")
 	TObjectPtr<UWeaponData> WeaponData;
 
+	void Equip(AWeapon* Weapon);
 	void SpawnInventory();
 	void DestroyInventory();
 protected:
 
 private:
+
+	UPROPERTY(Transient, ReplicatedUsing = OnRep_CurrentWeapon)
+	TObjectPtr<AWeapon> CurrentWeapon;
+
+	UFUNCTION()
+	void OnRep_CurrentWeapon(AWeapon* LastWeapon);
+
+	UPROPERTY(Transient, Replicated)
+	TArray<AWeapon*> Inventory;
+
 	UPROPERTY(EditDefaultsOnly, Category = "FPS|Weapon")
-	TSubclassOf<AWeapon> DefaultWeaponClass;
+	TArray<TSubclassOf<AWeapon>> DefaultWeaponClasses;
 
 	AWeapon* SpawnWeapon(TSubclassOf<AWeapon> WeaponClass) const;
 

@@ -18,7 +18,7 @@ AWeapon::AWeapon()
 	MeshFirstPerson->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
 	MeshFirstPerson->bReceivesDecals = false;
 	MeshFirstPerson->CastShadow = false;
-	//MeshFirstPerson->SetHiddenInGame(true);
+	MeshFirstPerson->SetHiddenInGame(true);
 	SetRootComponent(MeshFirstPerson);
 
 	MeshThirdPerson = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("MeshThirdPerson"));
@@ -26,7 +26,7 @@ AWeapon::AWeapon()
 	MeshThirdPerson->bReceivesDecals = false;
 	MeshThirdPerson->CastShadow = true;
 	MeshThirdPerson->SetupAttachment(MeshFirstPerson);
-	//MeshThirdPerson->SetHiddenInGame(true);
+	MeshThirdPerson->SetHiddenInGame(true);
 
 }
 
