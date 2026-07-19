@@ -27,18 +27,21 @@ public:
 	void AimPressed();
 	void AimReleased();
 
-	UPROPERTY(EditDefaultsOnly, Category = "FPS|Weapon")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "FPS|Weapon")
 	TObjectPtr<UWeaponData> WeaponData;
 
 	void Equip(AWeapon* Weapon);
 	void SpawnInventory();
 	void DestroyInventory();
+
+	UPROPERTY(BlueprintReadOnly, Replicated)
+	bool bAiming;
+
 protected:
+	UPROPERTY(Transient, BlueprintReadOnly, ReplicatedUsing = OnRep_CurrentWeapon)
+	TObjectPtr<AWeapon> CurrentWeapon;
 
 private:
-
-	UPROPERTY(Transient, ReplicatedUsing = OnRep_CurrentWeapon)
-	TObjectPtr<AWeapon> CurrentWeapon;
 
 	UFUNCTION()
 	void OnRep_CurrentWeapon(AWeapon* LastWeapon);
@@ -51,4 +54,8 @@ private:
 
 	AWeapon* SpawnWeapon(TSubclassOf<AWeapon> WeaponClass) const;
 
+	UFUNCTION(Server, Reliable)
+	void Server_Aim(bool bPressed);
+
+	void Local_Aim(bool bPressed);
 };

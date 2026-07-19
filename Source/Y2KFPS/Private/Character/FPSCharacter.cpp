@@ -44,12 +44,16 @@ AFPSCharacter::AFPSCharacter()
 
 	Combat = CreateDefaultSubobject<UCombatComponent>("Combat");
 	Combat->SetIsReplicated(true);
+
+	DefaultFieldOfView = 90.0f;
 }
 
 // Called when the game starts or when spawned
 void AFPSCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	FirstPersonCamera->SetFieldOfView(DefaultFieldOfView);
 }
 
 void AFPSCharacter::BeginDestroy()
@@ -132,9 +136,11 @@ void AFPSCharacter::FireWeaponReleased()
 void AFPSCharacter::AimPressed()
 {
 	Combat->AimPressed();
+	OnAim(true);
 }
 
 void AFPSCharacter::AimReleased()
 {
 	Combat->AimReleased();
+	OnAim(false);
 }

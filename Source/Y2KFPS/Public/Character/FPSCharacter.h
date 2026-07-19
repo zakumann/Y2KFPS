@@ -19,9 +19,6 @@ class Y2KFPS_API AFPSCharacter : public ACharacter, public IPlayerInterface
 	GENERATED_BODY()
 
 	UPROPERTY(VisibleAnywhere, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UCameraComponent> FirstPersonCamera;
-
-	UPROPERTY(VisibleAnywhere, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USpringArmComponent> SpringArm;
 
 	/** First person arms skeletal mesh (visible only to the local controlling player) */
@@ -48,6 +45,19 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void BeginDestroy() override;
 
+protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FPS|Combat")
+	TObjectPtr<UCombatComponent> Combat;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FPS|Camera")
+	TObjectPtr<UCameraComponent> FirstPersonCamera;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "FPS|Aiming")
+	float DefaultFieldOfView;
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnAim(bool bIsAiming);
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -63,9 +73,6 @@ public:
 
 	/** ~PlayerInterface*/
 private:
-	UPROPERTY(VisibleAnywhere)
-	TObjectPtr<UCombatComponent> Combat;
-
 
 	void CycleWeapon();
 	void ReloadWeapon();
