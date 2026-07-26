@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Interfaces/PlayerInterface.h"
+#include "ShooterTypes/ShooterTypes.h"
 #include "FPSCharacter.generated.h"
 
 class UCameraComponent;
@@ -45,6 +46,15 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void BeginDestroy() override;
 
+	UFUNCTION(BlueprintCallable)
+	FRotator GetFixedAnimRotation() const;
+
+	UPROPERTY(BlueprintReadOnly, Category = "FPS|FABRIK")
+	FTransform FABRIK_SocketTransform;
+
+	UFUNCTION(BlueprintCallable)
+	bool HasCurrentWeapon() const;
+
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FPS|Combat")
 	TObjectPtr<UCombatComponent> Combat;
@@ -57,6 +67,15 @@ protected:
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnAim(bool bIsAiming);
+
+	UPROPERTY(BlueprintReadOnly, Category = "FPS|TurnInPlace")
+	float AO_Yaw;
+
+	UPROPERTY(BlueprintReadOnly, Category = "FPS|Strafing")
+	float MovementOffsetYaw;
+
+	UPROPERTY(BlueprintReadOnly, Category = "FPS|TurnInPlace")
+	ETurningInPlace TurningStatus;
 
 public:	
 	// Called every frame
@@ -80,4 +99,11 @@ private:
 	void FireWeaponReleased();
 	void AimPressed();
 	void AimReleased();
+
+	void CalculateFABRIKSocketTransform();
+	void CalculateTurnInPlaceParameters(float DeltaTime);
+	void TurnInPlace(float DeltaTime);
+
+	FRotator StartingAimRotation;
+	float InterpAO_Yaw;
 };
