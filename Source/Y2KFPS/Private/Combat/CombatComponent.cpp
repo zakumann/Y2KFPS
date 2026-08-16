@@ -6,12 +6,18 @@
 #include "GameFramework/pawn.h"
 #include "Net/UnrealNetWork.h"
 #include "Weapon/Weapon.h"
+#include "Animation/AnimInstance.h"
+#include "Animation/AnimMontage.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Data/WeaponData.h"
+#include "Interfaces/PlayerInterface.h"
 
 // Sets default values for this component's properties
 UCombatComponent::UCombatComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
 
+	TraceLength = 20000;
 }
 
 // Called every frame
@@ -43,26 +49,61 @@ void UCombatComponent::CycleWeapon()
 
 void UCombatComponent::FireWeaponPressed()
 {
-
-	GEngine->AddOnScreenDebugMessage(
-		-1,
-		5.0f,
-		FColor::Cyan,
-		TEXT("FireWeaponPressed"),
-		false
-	);
+	Local_FireWeapon();
 }
+
+
+void UCombatComponent::Local_FireWeapon()
+{
+	if (!IsValid(CurrentWeapon)) return;
+	ensure(IsValid(WeaponData));
+
+	UAnimMontage* Montage1P = WeaponData->FirstPersonMontages.FindChecked(CurrentWeapon->WeaponType).FireMontage;
+	USkeletalMeshComponent* MeshFirstPerson = IPlayerInterface::Execute_GetMeshFirstPerson(GetOwner());
+	if (IsValid(Montage1P) && IsValid(MeshFirstPerson))
+	{
+		MeshFirstPerson->GetAnimInstance()->Montage_Play(Montage1P);
+	}
+
+	FHitResult Hit;
+	CurrentWeapon->WeaponTrace(Hit, TraceLength);
+
+	Server_FireWeapon();
+}
+
+void UCombatComponent::Server_FireWeapon_Implementation()
+{
+	Multicast_FireWeapon();
+}
+
+void UCombatComponent::Multicast_FireWeapon_Implementation()
+{
+	APawn* OwningPawn = Cast<APawn>(GetOwner());
+	if (OwningPawn->IsLocallyControlled())
+	{
+		// do locally-controlled stuff.
+	}
+	else
+	{
+		ensure(IsValid(WeaponData));
+
+		UAnimMontage* Montage3P = WeaponData->ThirdPersonMontages.FindChecked(CurrentWeapon->WeaponType).FireMontage;
+		USkeletalMeshComponent* MeshThirdPerson = IPlayerInterface::Execute_GetMeshThirdPerson(GetOwner());
+		if (IsValid(Montage3P) && IsValid(MeshThirdPerson))
+		{
+			MeshThirdPerson->GetAnimInstance()->Montage_Play(Montage3P);
+		}
+	}
+}
+
 
 void UCombatComponent::FireWeaponReleased()
 {
-	GEngine->AddOnScreenDebugMessage(
-		-1,
-		5.0f,
-		FColor::Cyan,
-		TEXT("FireWeaponReleased"),
-		false
-	);
 }
+
+// Server_FireWeapon
+	// Multicast_FireWeapon()
+
 
 void UCombatComponent::ReloadWeapon()
 {
@@ -92,7 +133,6 @@ void UCombatComponent::Server_Aim_Implementation(bool bPressed)
 {
 	Local_Aim(bPressed);
 }
-
 
 void UCombatComponent::Local_Aim(bool bPressed)
 {
