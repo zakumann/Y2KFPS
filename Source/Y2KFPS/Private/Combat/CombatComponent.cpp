@@ -2,15 +2,17 @@
 
 
 #include "Combat/CombatComponent.h"
-#include "Engine/Engine.h"
-#include "GameFramework/pawn.h"
-#include "Net/UnrealNetWork.h"
-#include "Weapon/Weapon.h"
+
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Data/WeaponData.h"
+#include "Engine/Engine.h"
+#include "GameFramework/pawn.h"
 #include "Interfaces/PlayerInterface.h"
+#include "Net/UnrealNetWork.h"
+#include "PhysicalMaterials/PhysicalMaterial.h"
+#include "Weapon/Weapon.h"
 
 // Sets default values for this component's properties
 UCombatComponent::UCombatComponent()
@@ -68,15 +70,18 @@ void UCombatComponent::Local_FireWeapon()
 	FHitResult Hit;
 	CurrentWeapon->WeaponTrace(Hit, TraceLength);
 
-	Server_FireWeapon();
+	EPhysicalSurface ImpactSurfaceType = Hit.PhysMaterial.IsValid(false) ? Hit.PhysMaterial->SurfaceType.GetValue() : SurfaceType1;
+	CurrentWeapon->Local_Fire(Hit.ImpactPoint, Hit.ImpactNormal, ImpactSurfaceType, true);
+
+	Server_FireWeapon(Hit);
 }
 
-void UCombatComponent::Server_FireWeapon_Implementation()
+void UCombatComponent::Server_FireWeapon_Implementation(const FHitResult& Hit)
 {
-	Multicast_FireWeapon();
+	Multicast_FireWeapon(Hit);
 }
 
-void UCombatComponent::Multicast_FireWeapon_Implementation()
+void UCombatComponent::Multicast_FireWeapon_Implementation(const FHitResult& Hit)
 {
 	APawn* OwningPawn = Cast<APawn>(GetOwner());
 	if (OwningPawn->IsLocallyControlled())
@@ -86,6 +91,9 @@ void UCombatComponent::Multicast_FireWeapon_Implementation()
 	else
 	{
 		ensure(IsValid(WeaponData));
+
+		EPhysicalSurface ImpactSurfaceType = Hit.PhysMaterial.IsValid(false) ? Hit.PhysMaterial->SurfaceType.GetValue() : SurfaceType1;
+		CurrentWeapon->Local_Fire(Hit.ImpactPoint, Hit.ImpactNormal, ImpactSurfaceType, true);
 
 		UAnimMontage* Montage3P = WeaponData->ThirdPersonMontages.FindChecked(CurrentWeapon->WeaponType).FireMontage;
 		USkeletalMeshComponent* MeshThirdPerson = IPlayerInterface::Execute_GetMeshThirdPerson(GetOwner());
